@@ -5,6 +5,8 @@ services:
       dockerfile: docker/Dockerfile
     container_name: hans
     restart: unless-stopped
+    env_file:
+      - ../.env
     volumes:
       - ../data:/app/data
     environment:
