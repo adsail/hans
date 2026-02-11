@@ -1,4 +1,5 @@
 import pkg from 'whatsapp-web.js';
+import type { Client as ClientType } from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { createLogger } from '../utils/logger.js';
@@ -9,7 +10,7 @@ export interface WhatsAppClientConfig {
   sessionPath: string;
 }
 
-export function createWhatsAppClient(config: WhatsAppClientConfig): Client {
+export function createWhatsAppClient(config: WhatsAppClientConfig): ClientType {
   logger.info('Creating WhatsApp client', { sessionPath: config.sessionPath });
 
   const client = new Client({
