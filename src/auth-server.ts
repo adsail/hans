@@ -220,6 +220,7 @@ class AuthServer {
 
     this.browser = await chromium.launch({
       headless: true,
+      executablePath: process.env.CHROME_PATH || '/usr/bin/chromium-browser',
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
