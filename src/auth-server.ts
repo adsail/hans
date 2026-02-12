@@ -1,10 +1,13 @@
 import http from 'http';
 import { chromium, Browser, Page } from 'playwright';
 import { createLogger } from './utils/logger.js';
-import { loadConfig } from './config.js';
 import { URLS } from './actions/wegmans/selectors.js';
 import fs from 'fs';
 import path from 'path';
+
+// Simple config for auth server - doesn't need full app config
+const DATA_PATH = process.env.DATA_PATH || './data';
+const BROWSER_STATE_PATH = path.join(DATA_PATH, 'browser-state');
 
 const logger = createLogger('auth-server');
 
@@ -133,7 +136,6 @@ const HTML_TEMPLATE = `
 class AuthServer {
   private browser: Browser | null = null;
   private page: Page | null = null;
-  private config = loadConfig();
 
   async start(port: number = 3847) {
     const server = http.createServer(async (req, res) => {
@@ -207,7 +209,7 @@ class AuthServer {
   }
 
   private async checkAuth(): Promise<boolean> {
-    const statePath = path.join(this.config.browserStatePath, 'wegmans');
+    const statePath = path.join(BROWSER_STATE_PATH, 'wegmans');
     return fs.existsSync(statePath);
   }
 
@@ -237,7 +239,7 @@ class AuthServer {
   private async saveSession() {
     if (!this.page) throw new Error('No browser session');
 
-    const statePath = path.join(this.config.browserStatePath, 'wegmans');
+    const statePath = path.join(BROWSER_STATE_PATH, 'wegmans');
     const context = this.page.context();
     await context.storageState({ path: statePath });
 
