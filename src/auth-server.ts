@@ -64,7 +64,7 @@ const HTML_TEMPLATE = `
     </div>
   </div>
 
-  <img id="screenshot" class="hidden" alt="Browser screenshot">
+  <img id="screenshot" class="hidden" alt="Browser screenshot" style="cursor: crosshair;" onclick="clickOnImage(event)">
 
   <script>
     async function checkStatus() {
@@ -116,6 +116,22 @@ const HTML_TEMPLATE = `
     async function clickAt() {
       await fetch('/api/click', { method: 'POST' });
       setTimeout(getScreenshot, 500);
+    }
+
+    async function clickOnImage(event) {
+      const img = event.target;
+      const rect = img.getBoundingClientRect();
+      const scaleX = 1280 / img.width;  // viewport width
+      const scaleY = 720 / img.height;  // viewport height
+      const x = Math.round((event.clientX - rect.left) * scaleX);
+      const y = Math.round((event.clientY - rect.top) * scaleY);
+      document.getElementById('status').textContent = 'Clicking at ' + x + ', ' + y + '...';
+      await fetch('/api/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ x, y })
+      });
+      setTimeout(getScreenshot, 1000);
     }
 
     async function saveSession() {
@@ -175,12 +191,20 @@ class AuthServer {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true }));
         } else if (url.pathname === '/api/click' && req.method === 'POST') {
-          const viewport = this.page?.viewportSize();
-          if (viewport) {
-            await this.page?.mouse.click(viewport.width / 2, viewport.height / 2);
+          const body = await this.readBody(req);
+          let x: number, y: number;
+          if (body) {
+            const coords = JSON.parse(body);
+            x = coords.x;
+            y = coords.y;
+          } else {
+            const viewport = this.page?.viewportSize();
+            x = viewport ? viewport.width / 2 : 640;
+            y = viewport ? viewport.height / 2 : 360;
           }
+          await this.page?.mouse.click(x, y);
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true }));
+          res.end(JSON.stringify({ success: true, x, y }));
         } else if (url.pathname === '/api/save' && req.method === 'POST') {
           await this.saveSession();
           res.writeHead(200, { 'Content-Type': 'application/json' });
