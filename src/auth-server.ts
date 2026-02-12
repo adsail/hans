@@ -245,11 +245,25 @@ class AuthServer {
     this.browser = await chromium.launch({
       headless: true,
       executablePath: process.env.CHROME_PATH || '/usr/bin/chromium-browser',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',
+        '--window-size=1280,720',
+      ],
     });
 
     const context = await this.browser.newContext({
       viewport: { width: 1280, height: 720 },
+      userAgent: 'Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      // Bypass some automation detection
+      bypassCSP: true,
+    });
+
+    // Remove webdriver flag to avoid detection
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
 
     this.page = await context.newPage();
